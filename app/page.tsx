@@ -1,8 +1,3 @@
-Ini adalah **KODE LENGKAP `app/page.tsx`** yang sudah diperbaiki untuk lolos validasi TypeScript di Vercel.
-
-Silakan **Copy** dan **Paste** ke file `app/page.tsx` kamu, lalu Save.
-
-```tsx
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -22,35 +17,25 @@ type TabType = 'dashboard' | 'scan' | 'history' | 'stats' | 'export';
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [history, setHistory] = useState<ScanHistory[]>([]);
-  // FIX: Gunakan undefined instead of null agar aman di TypeScript strict mode Vercel
   const [image, setImage] = useState<string | undefined>(undefined);
   const [result, setResult] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  // Camera State
   const [cameraActive, setCameraActive] = useState(false);
-  
   const [searchQuery, setSearchQuery] = useState('');
   const [showMobileMenu, setShowMobileMenu] = useState(false);
-  
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // --- CAMERA LOGIC FIX (ANTI HITAM) ---
   useEffect(() => {
     let stream: MediaStream | null = null;
-
     const initCamera = async () => {
-      // Jika kamera aktif DAN elemen video sudah di-render
       if (cameraActive && videoRef.current && !streamRef.current) {
         try {
-          // Minta akses kamera (preferensi kamera belakang)
           stream = await navigator.mediaDevices.getUserMedia({
             video: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 } },
             audio: false
           });
-          
           streamRef.current = stream;
           if (videoRef.current) {
             videoRef.current.srcObject = stream;
@@ -63,10 +48,7 @@ export default function Home() {
         }
       }
     };
-
     initCamera();
-
-    // Cleanup: Matikan kamera saat component unmount atau mode kamera mati
     return () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
@@ -76,9 +58,8 @@ export default function Home() {
         videoRef.current.srcObject = null;
       }
     };
-  }, [cameraActive]); // Trigger ulang setiap kali status cameraActive berubah
+  }, [cameraActive]);
 
-  // Load Data History
   useEffect(() => {
     try {
       const saved = localStorage.getItem('nutriscan_history');
@@ -86,34 +67,24 @@ export default function Home() {
     } catch (e) { console.error(e); }
   }, []);
 
-  // Save Data History
   useEffect(() => {
     try { localStorage.setItem('nutriscan_history', JSON.stringify(history)); } catch (e) { console.error(e); }
   }, [history]);
 
-  // Handlers
-  const startCamera = () => {
-    setError(null);
-    setCameraActive(true);
-  };
+  const startCamera = () => { setError(null); setCameraActive(true); };
 
   const captureImage = () => {
     if (!videoRef.current) return;
-    
-    // Pause video sebentar agar hasil foto tidak blur
     videoRef.current.pause(); 
-    
     const canvas = document.createElement('canvas');
     canvas.width = videoRef.current.videoWidth; 
     canvas.height = videoRef.current.videoHeight;
-    
     const ctx = canvas.getContext('2d');
     ctx?.drawImage(videoRef.current, 0, 0);
-    
     const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
     compressImage(dataUrl).then(compressed => {
       setImage(compressed);
-      setCameraActive(false); // Matikan kamera setelah foto diambil
+      setCameraActive(false);
     });
   };
 
@@ -137,8 +108,6 @@ export default function Home() {
       if (!response.ok) throw new Error('Gagal terhubung ke server');
       const data = await response.json();
       setResult(data);
-      
-      // Simpan ke history
       const newItem: ScanHistory = {
         id: Date.now().toString(), timestamp: new Date().toISOString(),
         food: data.food, calories: data.calories, confidence: data.confidence,
@@ -149,13 +118,9 @@ export default function Home() {
     finally { setLoading(false); }
   };
 
-  const reset = () => { 
-    setImage(undefined); setResult(null); setError(null); setLoading(false); setCameraActive(false); 
-  };
-  
+  const reset = () => { setImage(undefined); setResult(null); setError(null); setLoading(false); setCameraActive(false); };
   const clearHistory = () => { setHistory([]); localStorage.removeItem('nutriscan_history'); };
 
-  // Stats
   const todayScans = history.filter(h => new Date(h.timestamp).toDateString() === new Date().toDateString());
   const todayCalories = todayScans.reduce((sum, h) => sum + h.calories, 0);
   const totalCalories = history.reduce((sum, h) => sum + h.calories, 0);
@@ -170,13 +135,10 @@ export default function Home() {
     { id: 'export' as TabType, label: 'Export Excel', icon: <Download className="w-5 h-5" /> },
   ];
 
-  // Animations
   const pageVariants = { initial: { opacity: 0, y: 20 }, animate: { opacity: 1, y: 0 }, exit: { opacity: 0, y: -20 } };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 font-sans text-slate-900">
-      
-      {/* --- MOBILE HEADER --- */}
       <header className="lg:hidden bg-white/80 backdrop-blur-md border-b border-slate-200 px-4 py-3 flex justify-between items-center sticky top-0 z-50">
         <div className="flex items-center gap-2">
           <div className="bg-gradient-to-r from-blue-600 to-cyan-500 p-2 rounded-lg shadow-md"><Flame className="w-5 h-5 text-white" /></div>
@@ -187,7 +149,6 @@ export default function Home() {
         </button>
       </header>
 
-      {/* --- MOBILE MENU --- */}
       <AnimatePresence>
         {showMobileMenu && (
           <motion.div initial={{ opacity: 0, x: '100%' }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: '100%' }}
@@ -207,7 +168,6 @@ export default function Home() {
       </AnimatePresence>
 
       <div className="flex max-w-7xl mx-auto relative">
-        {/* --- DESKTOP SIDEBAR --- */}
         <aside className="hidden lg:flex w-72 bg-white border-r border-slate-200 h-screen flex-col sticky top-0 shadow-sm z-30">
           <div className="p-8 pb-6">
             <div className="flex items-center gap-3 mb-1">
@@ -237,11 +197,8 @@ export default function Home() {
           </div>
         </aside>
 
-        {/* --- MAIN CONTENT --- */}
         <main className="flex-1 p-4 lg:p-10 w-full min-h-screen">
           <AnimatePresence mode="wait">
-            
-            {/* TAB: DASHBOARD */}
             {activeTab === 'dashboard' && (
               <motion.div key="dash" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="space-y-8">
                 <div className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-cyan-600 to-blue-700 rounded-3xl p-8 text-white shadow-2xl shadow-blue-500/20">
@@ -266,7 +223,6 @@ export default function Home() {
                   </div>
                   <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
                 </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setActiveTab('scan')}
                     className="bg-white rounded-2xl border border-slate-200 p-8 text-left hover:border-blue-400 hover:shadow-xl transition-all group flex items-start justify-between">
@@ -277,7 +233,6 @@ export default function Home() {
                     </div>
                     <ArrowRight className="w-6 h-6 text-slate-300 group-hover:text-blue-500 group-hover:translate-x-1 transition-all" />
                   </motion.button>
-
                   <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={() => setActiveTab('export')}
                     className="bg-white rounded-2xl border border-slate-200 p-8 text-left hover:border-green-400 hover:shadow-xl transition-all group flex items-start justify-between">
                     <div>
@@ -291,7 +246,6 @@ export default function Home() {
               </motion.div>
             )}
 
-            {/* TAB: SCAN (FIXED CAMERA) */}
             {activeTab === 'scan' && (
               <motion.div key="scan" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="max-w-4xl mx-auto space-y-6">
                 <div className="bg-white rounded-3xl border border-slate-200 shadow-lg shadow-slate-200/50 overflow-hidden">
@@ -299,9 +253,7 @@ export default function Home() {
                     <h3 className="font-bold text-lg flex items-center gap-2"><Camera className="w-5 h-5 text-blue-600" /> Input Makanan</h3>
                     {image && <button onClick={reset} className="text-sm text-red-500 hover:text-red-700 font-medium flex items-center gap-1"><RotateCcw className="w-4 h-4" /> Reset</button>}
                   </div>
-                  
                   <div className="p-6">
-                    {/* Logic: Jika tidak ada gambar dan tidak ada kamera aktif -> Tampilkan tombol upload/kamera */}
                     {!image && !cameraActive ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }} onClick={startCamera}
@@ -317,17 +269,9 @@ export default function Home() {
                         </motion.label>
                       </div>
                     ) : cameraActive ? (
-                      // Logic: Jika kamera aktif -> Tampilkan Video Player
                       <div className="space-y-4">
                         <div className="relative rounded-2xl overflow-hidden border-4 border-blue-500 shadow-xl bg-black aspect-video">
-                          {/* Video Element dengan ref yang benar */}
-                          <video 
-                            ref={videoRef} 
-                            className="w-full h-full object-cover" 
-                            autoPlay 
-                            playsInline 
-                            muted 
-                          />
+                          <video ref={videoRef} className="w-full h-full object-cover" autoPlay playsInline muted />
                           <div className="absolute top-4 left-4 bg-red-500 text-white px-4 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 animate-pulse">
                             <div className="w-2 h-2 bg-white rounded-full" />RECORDING
                           </div>
@@ -341,10 +285,8 @@ export default function Home() {
                         </div>
                       </div>
                     ) : (
-                      // Logic: Jika ada gambar -> Tampilkan Preview
                       <div className="space-y-6">
                         <div className="relative group">
-                          {/* FIX: src hanya menerima string atau undefined */}
                           <img src={image} alt="Preview" className="w-full max-h-80 object-contain rounded-2xl border-2 border-slate-200 bg-slate-50" />
                           <div className="absolute top-4 right-4 bg-green-500 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-lg flex items-center gap-1">
                             <CheckCircle className="w-3 h-3" />Siap Analisis
@@ -358,10 +300,7 @@ export default function Home() {
                     )}
                   </div>
                 </div>
-
                 {error && <div className="bg-red-50 border-2 border-red-200 text-red-600 px-5 py-4 rounded-2xl flex items-center gap-3"><AlertCircle className="w-5 h-5" />{error}</div>}
-
-                {/* Result Card */}
                 {result && (
                   <motion.div initial={{ opacity: 0, scale: 0.95, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} className="space-y-4">
                     <div className="bg-white rounded-3xl border border-slate-200 shadow-xl overflow-hidden">
@@ -399,7 +338,6 @@ export default function Home() {
               </motion.div>
             )}
 
-            {/* TAB: HISTORY */}
             {activeTab === 'history' && (
               <motion.div key="history" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="max-w-4xl mx-auto space-y-6">
                 <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
@@ -410,7 +348,6 @@ export default function Home() {
                   </div>
                   {history.length > 0 && <button onClick={clearHistory} className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-sm font-medium transition"><Trash2 className="w-4 h-4" />Hapus Semua</button>}
                 </div>
-
                 {filteredHistory.length === 0 ? (
                   <div className="bg-white rounded-3xl border border-slate-200 p-16 text-center">
                     <Database className="w-16 h-16 text-slate-200 mx-auto mb-4" />
@@ -443,7 +380,6 @@ export default function Home() {
               </motion.div>
             )}
 
-            {/* TAB: STATS */}
             {activeTab === 'stats' && (
               <motion.div key="stats" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="max-w-4xl mx-auto space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -468,7 +404,6 @@ export default function Home() {
               </motion.div>
             )}
 
-            {/* TAB: EXPORT */}
             {activeTab === 'export' && (
               <motion.div key="export" variants={pageVariants} initial="initial" animate="animate" exit="exit" className="max-w-3xl mx-auto">
                 <div className="bg-gradient-to-br from-green-500 to-emerald-700 rounded-3xl p-10 text-white text-center shadow-2xl shadow-green-500/30 relative overflow-hidden">
@@ -479,7 +414,6 @@ export default function Home() {
                     </div>
                     <h2 className="text-3xl font-bold mb-4">Export Data Laporan</h2>
                     <p className="text-green-100 mb-8 max-w-md mx-auto">Download riwayat scan, kalori, dan rekomendasi AI ke dalam format Microsoft Excel (.xlsx).</p>
-                    
                     <div className="grid grid-cols-3 gap-4 max-w-md mx-auto mb-8">
                       <div className="bg-white/10 backdrop-blur-sm rounded-xl p-3 border border-white/20">
                         <div className="text-2xl font-bold">{history.length}</div>
@@ -494,7 +428,6 @@ export default function Home() {
                         <div className="text-xs text-green-100">Siap</div>
                       </div>
                     </div>
-
                     <button onClick={() => exportToExcel(history)} disabled={history.length === 0}
                       className="inline-flex items-center gap-2 px-8 py-4 rounded-xl bg-white text-green-700 font-bold text-lg hover:bg-green-50 disabled:opacity-50 disabled:cursor-not-allowed transition shadow-lg">
                       <Download className="w-5 h-5" /> Download Excel Sekarang
@@ -503,11 +436,9 @@ export default function Home() {
                 </div>
               </motion.div>
             )}
-
           </AnimatePresence>
         </main>
       </div>
     </div>
   );
 }
-```
