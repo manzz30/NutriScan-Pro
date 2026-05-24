@@ -1,3 +1,8 @@
+Ini adalah **KODE LENGKAP `app/page.tsx`** yang sudah diperbaiki untuk lolos validasi TypeScript di Vercel.
+
+Silakan **Copy** dan **Paste** ke file `app/page.tsx` kamu, lalu Save.
+
+```tsx
 'use client';
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -17,7 +22,8 @@ type TabType = 'dashboard' | 'scan' | 'history' | 'stats' | 'export';
 export default function Home() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard');
   const [history, setHistory] = useState<ScanHistory[]>([]);
-  const [image, setImage] = useState<string | null>(null);
+  // FIX: Gunakan undefined instead of null agar aman di TypeScript strict mode Vercel
+  const [image, setImage] = useState<string | undefined>(undefined);
   const [result, setResult] = useState<any | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -144,7 +150,7 @@ export default function Home() {
   };
 
   const reset = () => { 
-    setImage(null); setResult(null); setError(null); setLoading(false); setCameraActive(false); 
+    setImage(undefined); setResult(null); setError(null); setLoading(false); setCameraActive(false); 
   };
   
   const clearHistory = () => { setHistory([]); localStorage.removeItem('nutriscan_history'); };
@@ -338,6 +344,7 @@ export default function Home() {
                       // Logic: Jika ada gambar -> Tampilkan Preview
                       <div className="space-y-6">
                         <div className="relative group">
+                          {/* FIX: src hanya menerima string atau undefined */}
                           <img src={image} alt="Preview" className="w-full max-h-80 object-contain rounded-2xl border-2 border-slate-200 bg-slate-50" />
                           <div className="absolute top-4 right-4 bg-green-500 text-white px-4 py-1.5 rounded-full text-xs font-bold shadow-lg flex items-center gap-1">
                             <CheckCircle className="w-3 h-3" />Siap Analisis
@@ -503,3 +510,4 @@ export default function Home() {
     </div>
   );
 }
+```
